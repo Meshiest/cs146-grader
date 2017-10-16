@@ -57,7 +57,7 @@ readYaml('config.yml', function(err, data) {
       if(choice > body.length)
         console.err('Invalid course selection');
       else {
-        canvas.get(`courses/${body[choice].id}/assignment`, {}, (err, resp, body) => {
+        canvas.get(`courses/${body[choice].id}/assignments`, {}, (err, resp, body) => {
           if(err) throw err;
 
           console.log(resp, body);
