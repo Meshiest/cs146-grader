@@ -1,0 +1,27 @@
+{
+	"name": "cs146-grader",
+	"version": "1.0.0",
+	"description": "automated grading for cs146 ",
+	"main": "app.js",
+	"dependencies": {
+		"axios": "^0.16.2",
+		"chalk": "^2.1.0",
+		"dotenv": "^4.0.0",
+		"lodash": "^4.17.4",
+		"prompt": "^1.0.0"
+	},
+	"devDependencies": {},
+	"scripts": {
+		"start": "node app.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Meshiest/cs146-grader.git"
+	},
+	"author": "",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/Meshiest/cs146-grader/issues"
+	},
+	"homepage": "https://github.com/Meshiest/cs146-grader#readme"
+}
