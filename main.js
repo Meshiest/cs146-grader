@@ -9,7 +9,7 @@ prompt.message = 'Select';
 prompt.delimeter = ':';
 
 let canvas;
-const PADDING = 5;
+const PADDING = 6;
 
 // Gets a page from canvas
 function get(route, params) {
@@ -76,7 +76,7 @@ async function main() {
   console.log('Select a Course: (* means Ta)');
   _.each(courses, (course, i) => {
     let grading = _.find(course.enrollments, {type: 'ta'}) ? ' *' : '  ';
-    console.log(`${grading}${leftPad(i + 1, PADDING)}) ${course.name} - ${course.course_code}`);
+    console.log(`${grading}${leftPad(i + 1, PADDING - 2)}) ${course.name} - ${course.course_code}`);
   });
 
 
