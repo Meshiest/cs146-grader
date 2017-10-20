@@ -132,9 +132,15 @@ async function main() {
   let students = await studentsPromise;
 
   let longestName = _.max(students.map(s=>s.name.length));
+  console.log('Submissions: (L means late)');
+  
+  submissions = _.sortBy(submissions, [s => _.get(_.find(students, {id: s.user_id}), "name", "")]);
+
   _.each(submissions, (submission, i) => {
     let student = _.find(students, {id: submission.user_id});
-    console.log(leftPad(i + 1, PADDING) + ') ' +
+    console.log(
+      (submission.seconds_late > 0 ? ' L' : '  ') +
+      leftPad(i + 1, PADDING - 2) + ') ' +
       (submission.workflow_state === 'submitted' ? '[x]' : '[ ]') + ' ' +
       _.padEnd(student.name, longestName) + ' - ' +
       (submission.attachments ?
