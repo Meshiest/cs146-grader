@@ -24,23 +24,37 @@ function choose(options) {
     prompt.get(options, (err, result) => err ? reject(err) : resolve(result)));
 }
 
-readYaml('config.yml', async (err, data) => {
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});
+
+readYaml('config.yml', (err, data) => {
   if (err) {
-    console.err('Missing config.yml file');
+    console.error('Missing config.yml file');
     return;
   }
 
   if(typeof data.host !== 'string') {
-    console.err('Missing config.yml host');
+    console.error('Missing config.yml host');
     return;
   }
 
   if(typeof data.token !== 'string') {
-    console.err('Missing config.yml token');
+    console.error('Missing config.yml token');
     return;
   }
 
   canvas = new Canvas(data.host, data);
+
+  try {
+    main();
+  } catch (e) {
+    console.error(e);
+  }
+});
+
+async function main() {
   console.log('Fetching Courses...');
   let courses;
 
@@ -48,10 +62,15 @@ readYaml('config.yml', async (err, data) => {
     courses = await get('courses');
   } catch (err) {
     if(err.statusCode == 401) {
-      console.err('Unauthorized config.yml token');
+      console.error('Unauthorized config.yml token');
       return;
     } else
       throw err;
+  }
+
+  if(!courses.length) {
+    console.error('No Courses...');
+    return;
   }
 
   console.log('Select a Course: (* means Ta)');
@@ -64,9 +83,9 @@ readYaml('config.yml', async (err, data) => {
   let choice, result;
   do {
     if(choice)
-      console.err('Invalid course selection');
+      console.error('Invalid course selection');
     prompt.start();
-    result = choose([{
+    result = await choose([{
       name: 'choice',
       validator: /^\d+$/,
       required: true,
@@ -77,27 +96,27 @@ readYaml('config.yml', async (err, data) => {
 
   let course = courses[choice].id;
 
-  console.log('Fetching Students...', course);
-  let studentPromise = get(`courses/${course}/students`);
-
-  let students = await studentPromise;
-  console.log('Students: ', students);
+  console.log('Fetching Students...');
+  let studentsPromise = get(`courses/${course}/students`);
 
   console.log('Fetching Assignments...');
-  let assignments = await get(`courses/${course}/assignments`)
+  let assignments = await get(`courses/${course}/assignments`);
+
+  if(!assignments.length) {
+    console.error('No Assignments...');
+    return;
+  }
 
   console.log('Select an Assignment: ');
   _.each(assignments, (assignment, i) =>
     console.log(`${leftPad(i + 1, PADDING)}) ${assignment.name}`));
 
-
-
   choice = 0;
   do {
     if(choice)
-      console.err('Invalid assignment selection');
+      console.error('Invalid assignment selection');
     prompt.start();
-    result = choose([{
+    result = await choose([{
       name: 'choice',
       validator: /^\d+$/,
       required: true,
@@ -106,18 +125,19 @@ readYaml('config.yml', async (err, data) => {
     choice = parseInt(result.choice) - 1;
   } while(choice > courses.length);
 
-  let assignment = assignments[result.choice].id;
+  let assignment = assignments[choice].id;
 
   console.log('Fetching Submissions...');
   let submissions = await get(`courses/${course}/assignments/${assignment}/submissions`)
-  
-  console.log(assignments);
-  _.each(assignments, (submission, i) => {
-    console.log(leftPad(i + 1, numPadding) + ') ' +
-      (submission.workflow_state === 'submitted' ? '[x]' : '[ ]') + ' ' +
-      (typeof submission.attachments !== 'undefined' ?
-        submission.attachments.map(f => f.display_name).join(', ') :
-        '-'));
-  });
+  let students = await studentsPromise;
 
-});
+  let longestName = _.max(students.map(s=>s.name.length));
+  _.each(submissions, (submission, i) => {
+    let student = _.find(students, {id: submission.user_id});
+    console.log(leftPad(i + 1, PADDING) + ') ' +
+      (submission.workflow_state === 'submitted' ? '[x]' : '[ ]') + ' ' +
+      _.padEnd(student.name, longestName) + ' - ' +
+      (submission.attachments ?
+        submission.attachments.map(f => f.display_name).join(', ') : ''));
+  });
+}
