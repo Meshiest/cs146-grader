@@ -133,8 +133,15 @@ async function main() {
 
   let longestName = _.max(students.map(s=>s.name.length));
   console.log('Submissions: (L means late)');
-  
-  submissions = _.sortBy(submissions, [s => _.get(_.find(students, {id: s.user_id}), "name", "")]);
+
+  // Sort students by last name
+  submissions = _.sortBy(submissions, [
+    // Find the student with this submission
+    s => _.get(_.find(students, {id: s.user_id}), "name", "")
+      .split(' ')
+      .splice(1) // Remove first name
+      .join(' ')
+  ]);
 
   _.each(submissions, (submission, i) => {
     let student = _.find(students, {id: submission.user_id});
